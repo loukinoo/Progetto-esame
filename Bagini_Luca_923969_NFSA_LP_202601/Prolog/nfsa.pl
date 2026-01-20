@@ -1,7 +1,7 @@
 %%%% Bagini    Luca    923969
 
 %%%% nfsa.pl
-%%%% Compilatore da RE a nsfa
+%%%% Compilatore da RE a nfsa in Prolog
 
 %%% Gestisco i casi base di RE
 
