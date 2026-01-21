@@ -29,7 +29,7 @@
                     (is-regex (cons 'a (cddr re))))))
         ((equal (car re) 'z) (is-regex (cadr re)))
         ((equal (car re) 'o) (is-regex (cadr re)))
-        (t nil)))
+        (t '())))
 
 
 ;;; Compilazione in automa
@@ -70,7 +70,7 @@
                     (list med2 '() fin) 
                     (list in '() fin))
                     (compile-transitions (cadr re) med1 med2))))
-        ;; Caso ricorsivo:
+        ;; Caso ricorsivo: RE+
         ((and (equal (car re) 'o) (not (null (cdr re))))
             (let ((med1 (gensym "Q"))
                 (med2 (gensym "Q")))
@@ -78,9 +78,7 @@
                     (list med2 '() med1)
                     (list med2 '() fin))
                     (compile-transitions (cadr re) med1 med2))))
-
-        ;; S-exp generica (trattata come simbolo atomico composto)
-        (t nil)))
+        (t '())))
 
 ;;; Funzione effettivamente utilizzata nella REPL
 ;;; L'automa ritornato è in forma (:NFSA iniziale finale transitions),
@@ -89,9 +87,9 @@
 ;;; dell'automa viste come liste (stato-partenza simbolo-di-transizione 
 ;;; stato-destinazione)
 (defun nfsa-compile-regex (re)
-    "Compila una regex in un automa NFSA. Ritorna NIL se non valida."
+    "Compila una regex in un automa NFSA e lo ritorna come quadrupla"
     (if (not (is-regex re))
-        nil
+        '()
         (let ((iniziale (gensym "Q"))
             (finale (gensym "Q")))
             (list :NFSA iniziale finale 
