@@ -31,7 +31,57 @@
         ((eq (car re) 'o) (is-regex (cadr re)))
         (t nil)))
 
-;;; Predicato effettivamente utilizzato nella REPL
+
+;;; Funzione di ausilio per creare le transizioni dell'automa
+(defun compile-transitions (re in fin)
+    "Funzione ricorsiva per generare le transizioni dell'automa"
+    (cond
+        ;; Caso base: considero la RE vuota come epsilon
+        ((null re) (list (list in '() fin)))
+        ;; Caso base: simbolo atomico
+        ((atom re) (list (list in re fin)))
+        ;; Caso base: simbolo Sexp non riservato
+        ((valid-sexp re) (list (list in re fin)))
+        ;; Caso ricorsivo: concatenazione di RE
+        ((eq (car re) 'c)
+            (if (null (cdr re))
+                (list (list in '() fin))
+                (let ((medio (gensym "Q")))
+                    (append (compile-transitions (cadr re) in medio)
+                        (compile-transitions (append '(c) (cddr re)) medio fin)))))
+        ;; Caso ricorsivo: somma di RE
+        ((eq (car re) 'a)
+            (if (null (cdr re))
+                '()
+                (let ((med1 (gensym "Q"))
+                    (med2 (gensym "Q")))
+                    (append (list (list in '() med1))
+                        (list (list med2 '() fin))
+                        (compile-transitions (cadr re) med1 med2)
+                        (compile-transitions (append '(a) (cddr re)) in fin)))))
+        ;; Caso ricorsivo: chiusura di Kleene
+        ((and (eq (car re) 'z) (not (null (cdr re))))
+            (let ((med1 (gensym "Q"))
+                (med2 (gensym "Q")))
+                (append (list (list in '() med1) 
+                    (list med2 '() med1) 
+                    (list med2 '() fin) 
+                    (list in '() fin))
+                    (compile-transitions (cadr re) med1 med2))))
+        ;; Caso ricorsivo:
+        ((and (eq (car re) 'o) (not (null (cdr re))))
+            (let ((med1 (gensym "Q"))
+                (med2 (gensym "Q")))
+                (append (list (list in '() med1)
+                    (list med2 '() med1)
+                    (list med2 '() fin))
+                    (compile-transitions (cadr re) med1 med2))))
+
+        ;; S-exp generica (trattata come simbolo atomico composto)
+        (t nil)))
+
+
+;;; Funzione effettivamente utilizzata nella REPL
 ;;; L'automa ritornato è in forma (:NFSA iniziale finale transitions), dove
 ;;; iniziale e finale sono lo stato iniziale e finale dell'automa ottenuti con gensym
 ;;; transitions è una lista che contiene le transizioni dell'automa viste come
@@ -45,19 +95,11 @@
                 (transitions (compile-transitions re iniziale finale)))
             (list :NFSA iniziale finale transitions))))
 
-(defun compile-transitions (re in fin)
-    "Funzione ricorsiva per generare le transizioni dell'automa"
-    (cond
-        ;; Caso base: considero la RE vuota come epsilon
-        ((null re) (list (list in '() fin)))
-        ;; Caso base: simbolo atomico
-        ((atom re) (list (list in re fin)))
-        ;; Caso base: simbolo Sexp non riservato
-        ((valid-sexp re) (list (list in re fin)))
-        ;; Caso ricorsivo: concatenazione di RE
-        ((eq (car re) 'c)
-            (if (null (cdr re))
-                (list (list in '() fin)))
-                (let ((medio (gensym "Q")))
-                    (append (compile-transitions (cadr re) in medio)
-                        (compile-transitions (append '(c) (cddr re)) medio fin)))
+
+;;; Funzione per controllare l'accettazione di un input da parte di un automa
+(defun nfsa-recognize (fa input)
+    "Ritorna vero quando l'input è accettato dall'fa"
+    )
+
+
+;;;; End of file nfsa.lisp
