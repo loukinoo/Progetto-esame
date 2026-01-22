@@ -30,7 +30,8 @@ is_regex(o(RE)) :- is_regex(RE), !.
 %%% nfsa_compile_regex/2
 %%% Predicato effettivamente utilizzato nella pratica
 nfsa_compile_regex(FA_Id, RE) :- 
-    % is_regex(RE),
+    is_regex(RE),
+    nfsa_delete(FA_Id),
     gensym(q, Iniziale),
     gensym(q, Finale),
     assertz(nfsa_init(FA_Id, Iniziale)),
@@ -104,7 +105,6 @@ compile_sum(FA_Id, [X | Y], Iniziale, Finale) :-
 %%% nfsa_recognize/2
 %%% Predicato effettivamente utilizzato nella pratica
 nfsa_recognize(FA_Id, Input) :-
-    % is_regex(Input),
     nfsa_init(FA_Id, Q),
     nfsa_recognize(FA_Id, Input, Q),
     !.
